@@ -7,13 +7,17 @@ import {
   cardExpiration,
   cardTypeValidation,
   cardValidation,
+  validBlock,
+  validNoBlock,
   CVCValidation,
   passwordValidation,
   cardUpdate,
   cardBalance,
+  passwordVerification,
+  passwordCrypt,
 } from "../services/cardService.js";
 import { findByCardId } from "../repositories/paymentRepository.js";
-import { insert } from "../repositories/cardRepository.js";
+import { insert, update } from "../repositories/cardRepository.js";
 
 async function cardCreation(req: Request, res: Response) {
   const { id, type } = req.body;
@@ -70,10 +74,12 @@ async function cardActivation(req: Request, res: Response) {
 
   try {
     const card = await cardValidation(id);
+    await validBlock(card.isBlocked);
     await CVCValidation(CVC, card.securityCode);
-    const passwordHash = await passwordValidation(password);
+    await passwordValidation(password);
+    const passwordHash = await passwordCrypt(password);
 
-    const cardData = { passwordHash, isBlocked: false };
+    const cardData = { password: passwordHash, isBlocked: false };
     await cardUpdate(id, cardData);
 
     res.sendStatus(200);
@@ -88,11 +94,53 @@ async function cardTransactions(req: Request, res: Response) {
   const id = Number(req.params);
   try {
     const transactions = await findByCardId(id);
-    const balance = cardBalance(transactions);
+    const balance = await cardBalance(transactions);
     res.status(200).send({ balance, transactions });
   } catch {
     res.sendStatus(500);
   }
 }
 
-export { cardCreation, cardActivation, cardTransactions };
+async function cardBlock(req: Request, res: Response) {
+  const { id, password } = req.body;
+  try {
+    const card = await cardValidation(id);
+    await validNoBlock(card.isBlocked);
+    await passwordVerification(password, card.password);
+
+    const cardData = { isBlocked: true };
+
+    await update(id, cardData);
+    res.sendStatus(200);
+  } catch (err) {
+    if (err.code) {
+      res.status(err.code).send(err.message);
+    }
+  }
+}
+
+async function cardUnlock(req: Request, res: Response) {
+  const { id, password } = req.body;
+  try {
+    const card = await cardValidation(id);
+    await validBlock(card.isBlocked);
+    await passwordVerification(password, card.password);
+
+    const cardData = { isBlocked: false };
+
+    await update(id, cardData);
+    res.sendStatus(200);
+  } catch (err) {
+    if (err.code) {
+      res.status(err.code).send(err.message);
+    }
+  }
+}
+
+export {
+  cardCreation,
+  cardActivation,
+  cardTransactions,
+  cardBlock,
+  cardUnlock,
+};

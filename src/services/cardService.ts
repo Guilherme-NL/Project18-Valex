@@ -68,11 +68,21 @@ async function cardValidation(id: number) {
     throw { code: 401, message: "The card date has expired!" };
   }
 
-  if (card.isBlocked === false) {
+  return card;
+}
+
+async function validBlock(isBlocked: boolean) {
+  if (isBlocked === false) {
     throw { code: 409, message: "The card is already activated!" };
   }
+  return "Card activated!";
+}
 
-  return card;
+async function validNoBlock(isBlocked: boolean) {
+  if (isBlocked === true) {
+    throw { code: 409, message: "The card is already blocked!" };
+  }
+  return "Card blocked!";
 }
 
 async function CVCValidation(CVC: string, CVCcrypt: string) {
@@ -106,6 +116,14 @@ async function passwordCrypt(password: string) {
   return passwordHash;
 }
 
+async function passwordVerification(password: string, passwordCrypt: string) {
+  const comparePassword = bcrypt.compareSync(password, passwordCrypt);
+  if (!comparePassword) {
+    throw { code: 401, message: "The password is incorrect!" };
+  }
+  return "passwords match!";
+}
+
 async function cardUpdate(id: number, cardData: CardUpdateData) {
   update(id, cardData);
 }
@@ -122,6 +140,8 @@ async function cardBalance(transactions: any) {
 export {
   cardTypeValidation,
   cardValidation,
+  validBlock,
+  validNoBlock,
   getCardNumber,
   cardName,
   cardExpiration,
@@ -131,4 +151,5 @@ export {
   passwordCrypt,
   cardUpdate,
   cardBalance,
+  passwordVerification,
 };

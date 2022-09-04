@@ -6,10 +6,16 @@ import {
   getCardNumber,
   cardExpiration,
   cardTypeValidation,
-} from "../services/cardCreationService.js";
+  cardValidation,
+  CVCValidation,
+  passwordValidation,
+  cardUpdate,
+  cardBalance,
+} from "../services/cardService.js";
+import { findByCardId } from "../repositories/paymentRepository.js";
 import { insert } from "../repositories/cardRepository.js";
 
-export default async function cardCreation(req: Request, res: Response) {
+async function cardCreation(req: Request, res: Response) {
   const { id, type } = req.body;
 
   //JOI VALIDATION
@@ -52,7 +58,41 @@ export default async function cardCreation(req: Request, res: Response) {
     await insert(cardData);
 
     res.sendStatus(200);
+  } catch (err) {
+    if (err.code) {
+      res.status(err.code).send(err.message);
+    }
+  }
+}
+
+async function cardActivation(req: Request, res: Response) {
+  const { id, CVC, password } = req.body;
+
+  try {
+    const card = await cardValidation(id);
+    await CVCValidation(CVC, card.securityCode);
+    const passwordHash = await passwordValidation(password);
+
+    const cardData = { passwordHash, isBlocked: false };
+    await cardUpdate(id, cardData);
+
+    res.sendStatus(200);
+  } catch (err) {
+    if (err.code) {
+      res.status(err.code).send(err.message);
+    }
+  }
+}
+
+async function cardTransactions(req: Request, res: Response) {
+  const id = Number(req.params);
+  try {
+    const transactions = await findByCardId(id);
+    const balance = cardBalance(transactions);
+    res.status(200).send({ balance, transactions });
   } catch {
     res.sendStatus(500);
   }
 }
+
+export { cardCreation, cardActivation, cardTransactions };

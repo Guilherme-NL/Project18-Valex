@@ -6,14 +6,11 @@ import {
   cardBlock,
   cardUnlock,
 } from "../controllers/cardController.js";
-import {
-  keyValidation,
-  employeeValidation,
-} from "../middlewares/cardMiddleware.js";
+import { keyValidation } from "../middlewares/cardMiddleware.js";
 
 const router = Router();
 
-router.post("/creation", keyValidation, employeeValidation, cardCreation);
+router.post("/creation", keyValidation, cardCreation);
 router.post("/activation", cardActivation);
 router.get("/transactions/:id", cardTransactions);
 router.post("/block", cardBlock);

@@ -15,6 +15,7 @@ import {
   cardBalance,
   passwordVerification,
   passwordCrypt,
+  employeeValidation,
 } from "../services/cardService.js";
 import { findByCardId as findPayments } from "../repositories/paymentRepository.js";
 import { findByCardId as findRecharges } from "../repositories/rechargeRepository.js";
@@ -25,7 +26,7 @@ async function cardCreation(req: Request, res: Response) {
 
   //JOI VALIDATION
   const dataSchema = joi.object({
-    id: joi.string().required(),
+    id: joi.number().required(),
     type: joi
       .string()
       .regex(/^(groceries|restaurants|transport|education|health)$/)
@@ -40,9 +41,8 @@ async function cardCreation(req: Request, res: Response) {
   }
 
   try {
+    const employee = await employeeValidation(id);
     await cardTypeValidation(id, type);
-
-    const employee = res.locals.employee;
 
     const shortName = await cardName(employee.fullName);
     let cardNumber = await getCardNumber();
@@ -96,12 +96,15 @@ async function cardTransactions(req: Request, res: Response) {
   const cardId = Number(id);
   console.log(cardId);
   try {
+    await cardValidation(cardId);
     const transactions = await findPayments(cardId);
     const recharges = await findRecharges(cardId);
     const balance = await cardBalance(transactions, recharges);
     res.status(200).send({ balance, transactions, recharges });
-  } catch {
-    res.sendStatus(500);
+  } catch (err) {
+    if (err.code) {
+      res.status(err.code).send(err.message);
+    }
   }
 }
 

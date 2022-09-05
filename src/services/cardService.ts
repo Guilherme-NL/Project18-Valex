@@ -6,6 +6,7 @@ import {
   update,
   CardUpdateData,
 } from "../repositories/cardRepository.js";
+import { findById as findEmployee } from "../repositories/employeeRepository.js";
 import { faker } from "@faker-js/faker";
 import bcrypt from "bcrypt";
 import Cryptr from "cryptr";
@@ -13,12 +14,25 @@ import Cryptr from "cryptr";
 const cryptr = new Cryptr("myTotallySecretKey");
 
 async function cardTypeValidation(id: number, type: TransactionTypes) {
+  console.log(id, type);
   const employeeCard = await findByTypeAndEmployeeId(type, id);
   console.log(employeeCard);
   if (employeeCard) {
     throw { code: 409, message: "The employee already has this type of card" };
   }
   return "All right, the employee still does not have this type of card";
+}
+
+async function employeeValidation(id: number) {
+  const employee = await findEmployee(id);
+
+  if (!employee) {
+    throw {
+      code: 404,
+      message: "There is no employee registered with this id",
+    };
+  }
+  return employee;
 }
 
 async function getCardNumber() {
@@ -155,4 +169,5 @@ export {
   cardUpdate,
   cardBalance,
   passwordVerification,
+  employeeValidation,
 };

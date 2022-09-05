@@ -15,7 +15,7 @@ const router = Router();
 
 router.post("/creation", keyValidation, employeeValidation, cardCreation);
 router.post("/activation", cardActivation);
-router.get("/transactions:id", cardTransactions);
+router.get("/transactions/:id", cardTransactions);
 router.post("/block", cardBlock);
 router.post("/unlock", cardUnlock);
 

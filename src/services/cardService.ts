@@ -128,10 +128,13 @@ async function cardUpdate(id: number, cardData: CardUpdateData) {
   update(id, cardData);
 }
 
-async function cardBalance(transactions: any) {
+async function cardBalance(transactions: any, recharges: any) {
   let balance = 0;
-  transactions.map((e: any) => {
+  recharges.map((e: any) => {
     balance += e.amount;
+  });
+  transactions.map((e: any) => {
+    balance -= e.amount;
   });
 
   return balance;

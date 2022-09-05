@@ -1,9 +1,6 @@
 import { Router } from "express";
 import cardRecharge from "../controllers/rechargeController.js";
-import {
-  keyValidation,
-  employeeValidation,
-} from "../middlewares/cardMiddleware.js";
+import { keyValidation } from "../middlewares/cardMiddleware.js";
 
 const router = Router();
 

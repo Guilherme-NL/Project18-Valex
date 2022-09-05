@@ -16,7 +16,8 @@ import {
   passwordVerification,
   passwordCrypt,
 } from "../services/cardService.js";
-import { findByCardId } from "../repositories/paymentRepository.js";
+import { findByCardId as findPayments } from "../repositories/paymentRepository.js";
+import { findByCardId as findRecharges } from "../repositories/rechargeRepository.js";
 import { insert, update } from "../repositories/cardRepository.js";
 
 async function cardCreation(req: Request, res: Response) {
@@ -91,11 +92,14 @@ async function cardActivation(req: Request, res: Response) {
 }
 
 async function cardTransactions(req: Request, res: Response) {
-  const id = Number(req.params);
+  const { id } = req.params;
+  const cardId = Number(id);
+  console.log(cardId);
   try {
-    const transactions = await findByCardId(id);
-    const balance = await cardBalance(transactions);
-    res.status(200).send({ balance, transactions });
+    const transactions = await findPayments(cardId);
+    const recharges = await findRecharges(cardId);
+    const balance = await cardBalance(transactions, recharges);
+    res.status(200).send({ balance, transactions, recharges });
   } catch {
     res.sendStatus(500);
   }
